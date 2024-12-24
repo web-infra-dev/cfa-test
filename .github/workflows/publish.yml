@@ -29,10 +29,33 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Obtain OIDC token
+        id: oidc
+        run: |
+          token=$(curl --fail -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=continuousauth.dev" | jq -r '.value')
+          echo "::add-mask::${token}"
+          echo "token=${token}" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Obtain GitHub credentials
+        id: github_creds
+        run: |
+          token=$(curl --fail "https://continuousauth.dev/api/request/${{ secrets.CFA_PROJECT_ID }}/github/credentials" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "Authorization: bearer ${{ secrets.CFA_SECRET }}" \
+            --data "{\"token\":\"${{ steps.oidc.outputs.token }}\"}" | jq -r '.GITHUB_TOKEN')
+          echo "::add-mask::${token}"
+          echo "token=${token}" >> $GITHUB_OUTPUT
+        shell: bash
+
       - name: Publish to npm
         run: node scripts/publish.mjs
         env:
           # NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # for pnpm
           # NPM_TOKEN: ${{ secrets.NPM_TOKEN }} # for npm
+          GITHUB_TOKEN: ${{ steps.github_creds.outputs.token }}
+          GITHUB_OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
           CFA_PROJECT_ID: ${{ secrets.CFA_PROJECT_ID }}
           CFA_SECRET: ${{ secrets.CFA_SECRET }}
