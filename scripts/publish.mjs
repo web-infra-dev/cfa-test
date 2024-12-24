@@ -1,4 +1,4 @@
-import cfaClient from '@continuous-auth/client'
+import { getOtp } from '@continuous-auth/client'
 import path from 'path'
 import { execa } from 'execa'
 
@@ -7,14 +7,13 @@ async function publish() {
 
   console.log('Getting OTP code')
 
-  const otp = await cfaClient.getOtp()
+  const otp = await getOtp()
 
   console.log('OTP code get, continuing...')
 
-  const result = execa('npm', ['publish', '--otp', otp], {
+  const result = execa('pnpm', ['publish', '--otp', otp], {
     cwd: projectRoot,
     env: process.env,
-    preferLocal: true,
   })
   result.stdout.pipe(process.stdout, { end: false })
   result.stderr.pipe(process.stderr, { end: false })
@@ -22,6 +21,5 @@ async function publish() {
 }
 
 publish().catch(error => {
-  console.error(error)
   process.exit(1)
 })

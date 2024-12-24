@@ -54,7 +54,7 @@ jobs:
         run: node scripts/publish.mjs
         env:
           # NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # for pnpm
-          # NPM_TOKEN: ${{ secrets.NPM_TOKEN }} # for npm
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }} # for npm
           GITHUB_TOKEN: ${{ steps.github_creds.outputs.token }}
           GITHUB_OIDC_TOKEN: ${{ steps.oidc.outputs.token }}
           CFA_PROJECT_ID: ${{ secrets.CFA_PROJECT_ID }}
