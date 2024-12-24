@@ -21,4 +21,7 @@ async function publish() {
   await result
 }
 
-publish().catch(console.error)
+publish().catch(error => {
+  console.error(error)
+  process.exit(1)
+})
