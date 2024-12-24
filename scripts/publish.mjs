@@ -11,7 +11,7 @@ async function publish() {
 
   console.log('OTP code get, continuing...')
 
-  const result = execa('pnpm', ['publish', '--otp', otp], {
+  const result = execa('npm', ['publish', '--otp', otp], {
     cwd: projectRoot,
     env: process.env,
   })
