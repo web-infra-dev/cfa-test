@@ -16,8 +16,8 @@ async function publish() {
     env: process.env,
     preferLocal: true,
   })
-  result.stdout.pipe(stdout, { end: false })
-  result.stderr.pipe(stderr, { end: false })
+  result.stdout.pipe(process.stdout, { end: false })
+  result.stderr.pipe(process.stderr, { end: false })
   await result
 }
 
