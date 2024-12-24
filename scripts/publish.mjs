@@ -8,7 +8,7 @@ async function publish() {
   const npmrcPath = path.resolve(projectRoot, '.npmrc')
 
   if (process.env.NPM_TOKEN) {
-    // The npm token is used for identifying the user, not for publishing.
+    // The npm token (Classic - Publish token) is used for identifying the user, not for publishing.
     await fs.writeFile(
       npmrcPath,
       `//registry.npmjs.org/:_authToken = ${process.env.NPM_TOKEN}`,
