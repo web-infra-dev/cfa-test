@@ -33,7 +33,7 @@ jobs:
         id: oidc
         run: |
           token=$(curl --fail -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=continuousauth.dev" | jq -r '.value')
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=cfa.volc.jkzing.com" | jq -r '.value')
           echo "::add-mask::${token}"
           echo "token=${token}" >> $GITHUB_OUTPUT
         shell: bash
@@ -41,7 +41,7 @@ jobs:
       - name: Obtain GitHub credentials
         id: github_creds
         run: |
-          token=$(curl --fail "https://continuousauth.dev/api/request/${{ secrets.CFA_PROJECT_ID }}/github/credentials" \
+          token=$(curl --fail "https://cfa.volc.jkzing.com/api/request/${{ secrets.CFA_PROJECT_ID }}/github/credentials" \
             -X POST \
             -H "Content-Type: application/json" \
             -H "Authorization: bearer ${{ secrets.CFA_SECRET }}" \
@@ -53,6 +53,7 @@ jobs:
       - name: Publish to npm
         run: node scripts/publish.mjs
         env:
+          CFA_HOST: https://cfa.volc.jkzing.com
           # NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # for pnpm
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }} # for npm
           GITHUB_TOKEN: ${{ steps.github_creds.outputs.token }}
