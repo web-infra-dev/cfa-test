@@ -33,8 +33,8 @@ async function publish() {
   r1.stderr.pipe(process.stderr, { end: false })
   await r1
 
-  // wait for 30 seconds to make sure otp is expired
-  await new Promise(resolve => setTimeout(resolve, 30000))
+  // wait for 300 seconds to make sure otp is expired
+  await new Promise(resolve => setTimeout(resolve, 300000))
 
   // try to publish another package with same otp
   const packageJsonPath = path.resolve(projectRoot, 'package.json')
