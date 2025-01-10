@@ -25,13 +25,30 @@ async function publish() {
 
   console.log('OTP code get, continuing...')
 
-  const result = execa('npm', ['publish', '--registry', 'https://registry.npmjs.org', '--userconfig', npmrcPath, '--otp', otp], {
+  const r1 = execa('npm', ['publish', '--registry', 'https://registry.npmjs.org', '--userconfig', npmrcPath, '--otp', otp], {
     cwd: projectRoot,
     env: process.env,
   })
-  result.stdout.pipe(process.stdout, { end: false })
-  result.stderr.pipe(process.stderr, { end: false })
-  await result
+  r1.stdout.pipe(process.stdout, { end: false })
+  r1.stderr.pipe(process.stderr, { end: false })
+  await r1
+
+  // wait for 30 seconds to make sure otp is expired
+  await new Promise(resolve => setTimeout(resolve, 30000))
+
+  // try to publish another package with same otp
+  const packageJsonPath = path.resolve(projectRoot, 'package.json')
+  const packageJson = await fs.readFile(packageJsonPath, 'utf-8')
+  const packageJsonObj = JSON.parse(packageJson)
+  packageJsonObj.name = '@zjk-dev/cfa-test-2'
+  await fs.writeFile(packageJsonPath, JSON.stringify(packageJsonObj, null, 2), 'utf-8')
+  const r2 = execa('npm', ['publish', '--registry', 'https://registry.npmjs.org', '--userconfig', npmrcPath, '--otp', otp], {
+    cwd: projectRoot,
+    env: process.env,
+  })
+  r2.stdout.pipe(process.stdout, { end: false })
+  r2.stderr.pipe(process.stderr, { end: false })
+  await r2
 }
 
 publish().catch(error => {
