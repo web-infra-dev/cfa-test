@@ -59,8 +59,6 @@ async function publish() {
   console.log('Publishing package @zjk-dev/cfa-test')
   await doPublish(otp)
 
-  // wait for 30 seconds
-  await new Promise((resolve) => setTimeout(resolve, 30000))
 
   // publish 10 packages with the same OTP
   for (let i = 1; i <= 10;) {
@@ -77,6 +75,8 @@ async function publish() {
         throw error
       }
     }
+    // wait for 10 seconds
+    await new Promise((resolve) => setTimeout(resolve, 10000))
   }
 }
 
