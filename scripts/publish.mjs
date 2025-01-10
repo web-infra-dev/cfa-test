@@ -7,50 +7,79 @@ async function publish() {
   const projectRoot = path.resolve(import.meta.dirname, '..')
   const npmrcPath = path.resolve(projectRoot, '.npmrc')
 
+  const doPublish = async (otp, name) => {
+    if (name) {
+      const packageJsonPath = path.resolve(projectRoot, 'package.json')
+      const packageJson = await fs.readFile(packageJsonPath, 'utf-8')
+      const packageJsonObj = JSON.parse(packageJson)
+      packageJsonObj.name = name
+      await fs.writeFile(
+        packageJsonPath,
+        JSON.stringify(packageJsonObj, null, 2),
+        'utf-8'
+      )
+    }
+    const result = execa(
+      'npm',
+      [
+        'publish',
+        '--registry', 'https://registry.npmjs.org',
+        '--userconfig', npmrcPath,
+        '--otp', otp,
+        '--access', 'public',
+      ],
+      {
+        cwd: projectRoot,
+        env: process.env,
+      }
+    )
+    result.stdout.pipe(process.stdout, { end: false })
+    result.stderr.pipe(process.stderr, { end: false })
+    await result
+  }
+
   if (process.env.NPM_TOKEN) {
     // The npm token (Classic - Publish token) is used for identifying the user, not for publishing.
     await fs.writeFile(
       npmrcPath,
       `//registry.npmjs.org/:_authToken = ${process.env.NPM_TOKEN}`,
       'utf-8'
-    );
-    console.log(`Wrote NPM_TOKEN to ${npmrcPath}`);
+    )
+    console.log(`Wrote NPM_TOKEN to ${npmrcPath}`)
   } else {
     throw new Error('NPM_TOKEN is not set')
   }
 
   console.log('Getting OTP code')
 
-  const otp = await getOtp()
+  let otp = await getOtp()
 
   console.log('OTP code get, continuing...')
 
-  const r1 = execa('npm', ['publish', '--registry', 'https://registry.npmjs.org', '--userconfig', npmrcPath, '--otp', otp], {
-    cwd: projectRoot,
-    env: process.env,
-  })
-  r1.stdout.pipe(process.stdout, { end: false })
-  r1.stderr.pipe(process.stderr, { end: false })
-  await r1
+  console.log('Publishing package @zjk-dev/cfa-test')
+  await doPublish(otp)
 
-  // wait for 300 seconds to make sure otp is expired
-  await new Promise(resolve => setTimeout(resolve, 300000))
+  // wait for 30 seconds
+  await new Promise((resolve) => setTimeout(resolve, 30000))
 
-  // try to publish another package with same otp
-  const packageJsonPath = path.resolve(projectRoot, 'package.json')
-  const packageJson = await fs.readFile(packageJsonPath, 'utf-8')
-  const packageJsonObj = JSON.parse(packageJson)
-  packageJsonObj.name = '@zjk-dev/cfa-test-2'
-  await fs.writeFile(packageJsonPath, JSON.stringify(packageJsonObj, null, 2), 'utf-8')
-  const r2 = execa('npm', ['publish', '--registry', 'https://registry.npmjs.org', '--userconfig', npmrcPath, '--otp', otp], {
-    cwd: projectRoot,
-    env: process.env,
-  })
-  r2.stdout.pipe(process.stdout, { end: false })
-  r2.stderr.pipe(process.stderr, { end: false })
-  await r2
+  // publish 10 packages with the same OTP
+  for (let i = 1; i <= 10;) {
+    const name = `@zjk-dev/cfa-test-${i}`
+    console.log(`Publishing package ${name}`)
+    try {
+      await doPublish(otp, name)
+      i++;
+    } catch (error) {
+      if (error.message.includes('npm error code EOTP')) {
+        console.log('OTP expired, getting new OTP')
+        otp = await getOtp()
+      } else {
+        throw error
+      }
+    }
+  }
 }
 
-publish().catch(error => {
+publish().catch((error) => {
   process.exit(1)
 })
